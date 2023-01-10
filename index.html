@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        #c {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 定义canvas标签 -->
+    <!--<span>123</span>-->
+    <canvas id="c"></canvas>
+    <script type="module">
+        import * as THREE from "./build/three.module.js"
+        function main() {
+            // 将canvas标签传给three.js
+            const canvas = document.querySelector('#c');
+            const renderer = new THREE.WebGLRenderer({ canvas });
+
+            // 设置透视摄像机
+            // 视野范围， 下面代码表示垂直方向75度
+            const fov = 75;
+            // 指画布的宽高比
+            // 指定的宽高比会出现在dom页面变大变小的时候网格对象也跟着变形.所以需要宽高比与canvas的宽高比一致
+            // const aspect = canvas.clientWidth / canvas.clientHeight
+            const aspect = 2;  // the canvas default
+            // near和far 表示近平面和远平面
+            const near = 0.1;
+            const far = 5;
+            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+            camera.position.z = 2;
+
+            // 创建一个场景
+            const scene = new THREE.Scene();
+
+            // 创建一个包含盒子的几何立方体
+            const boxWidth = 1;
+            const boxHeight = 1;
+            const boxDepth = 1;
+            const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+            // 创建一个基本材质并设置颜色
+            // 改变立方体的材质 MeshBasicMaterial材质不会受到灯光的影响。我们将他改成会受灯光影响的MeshPhongMaterial材质
+            // const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });  // greenish blue
+            const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 });  // 绿蓝色
+
+            // 创建一个网格对象,需要传入几何立方体和材质
+            const cube = new THREE.Mesh(geometry, material);
+            // 创建一个生成网格对象的函数.
+            function makeInstance(geometry, color, x) {
+                const material = new THREE.MeshPhongMaterial({ color })
+
+                const cube = new THREE.Mesh(geometry, material)
+                scene.add(cube)
+
+                cube.position.x = x;
+
+                return cube
+            }
+
+            // 生成三个不同颜色不同位置的网格对象
+            const cubes = [
+                makeInstance(geometry, 0x44aa88, 0),
+                makeInstance(geometry, 0x8844aa, -2),
+                makeInstance(geometry, 0xaa8844, 2),
+            ]
+
+            // 将网格添加到场景中
+            scene.add(cube);
+
+            // 创建一盏平行灯光
+            const color = 0xFFFFFF
+            const intensity = 1
+            const light = new THREE.DirectionalLight(color, intensity)
+            light.position.set(-1, 2, 4)
+            scene.add(light)
+
+
+            // 设置场景render的渲染分辨率(或者说叫绘图缓冲区(drawingbuffer)尺寸)。 使其和canvas窗口保持一致,让网格对象显示清晰.
+            function resizeRendererToDisplaySize(renderer) {
+                const canvas = renderer.domElement
+                const width = canvas.clientWidth
+                const height = canvas.clientHeight
+                const needResize = canvas.width !== width || canvas.height !== height
+                if (needResize) {
+                    renderer.setSize(width, height, false);
+                }
+                return needResize;
+            }
+
+            // 用一个渲染循环函数 requestAnimationFrame 让立方体旋转
+            function render(time) {
+                time *= 0.001 // 将时间单位变为秒
+
+                cubes.forEach((cube, ndx) => {
+                    const speed = 1 + ndx * 0.1
+                    const rot = time * speed
+                    cube.rotation.x = rot
+                    cube.rotation.y = rot
+                })
+                // 指定的宽高比会出现在dom页面变大变小的时候网格对象也跟着变形.所以需要宽高比与canvas的宽高比一致
+                if (resizeRendererToDisplaySize(renderer)) {
+                    const canvas = renderer.domElement
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight
+                    camera.updateProjectionMatrix()
+                }
+
+                cube.rotation.x = time
+                cube.rotation.y = time
+
+                renderer.render(scene, camera)
+
+                requestAnimationFrame(render)
+            }
+            requestAnimationFrame(render)
+            // 将场景和摄像机传给渲染器渲染出整个场景
+            // renderer.render(scene, camera);
+        }
+        main()
+    </script>
+
+</body>
+
+</html>

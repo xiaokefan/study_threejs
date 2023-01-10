@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Document</title>
+</head>
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    html,
+    body {
+        height: 100%;
+        width: 100%;
+    }
+
+    #c {
+        height: 100%;
+        width: 100%;
+        display: block;
+    }
+</style>
+
+<body>
+    <canvas id="c"></canvas>
+    <script type="module">
+        import * as THREE from './build/three.module.js'
+
+        function main() {
+            // 获取canvas 传给webgl渲染器
+            const canvas = document.querySelector("#c")
+            const renderer = new THREE.WebGLRenderer({ canvas })
+            // 创建一个透视摄像机
+            const fov = 75   // 视野范围
+            const aspect = 2 // 相机宽高比
+            const near = 0.1 // 近平面
+            const far = 5    // 远平面
+            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+            camera.position.z = 2
+
+            // 创建一个场景
+            const scene = new THREE.Scene()
+
+            // 创建灯光--平行灯光
+            {
+                const color = 0xFFFFFF
+                const intensity = 1
+                const light = new THREE.DirectionalLight(color, intensity)
+                light.position.set(-1, 2, 4)
+                scene.add(light)
+            }
+
+            // 创建一个立方几何体
+            const boxWidth = 1
+            const boxHeight = 1
+            const boxDepth = 1
+            const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth)
+
+            // 创建一个材质
+            // MeshBasicMaterial 材质不受灯光影响
+            // const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 })
+            // MeshPhongMaterial 受灯光影响的材质
+            // const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 })
+
+            // 创建一个网格对象   网格 = 材质 + 几何体
+            // const cube = new THREE.Mesh(geometry, material)
+            // 构建多个网格对象
+            function makeInstance(geometry, color, x) {
+                const material = new THREE.MeshPhongMaterial({ color })
+                const cube = new THREE.Mesh(geometry, material)
+                scene.add(cube)
+                cube.position.x = x
+
+                return cube
+            }
+
+            const cubes = [
+                makeInstance(geometry, 0x44aa88, 0),
+                makeInstance(geometry, 0x8844aa, -2),
+                makeInstance(geometry, 0xaa8844, 2),
+            ]
+
+            // 将网格添加到场景中
+            // scene.add(cube)
+
+            // // 将场景和摄像机传给渲染器来渲染整个场景
+            // renderer.render(scene, camera)
+
+            // 使用渲染循环函数让立方体旋转起来.
+            function render(time) {
+                time *= 0.001
+
+                if (resizeRendererToDisplaySize(renderer)) {
+                    const canvas = renderer.domElement;
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+
+                // const canvas = renderer.domElement;
+                // camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                // camera.updateProjectionMatrix();
+
+                cubes.forEach((cube, index) => {
+                    const speed = 1 + index * .1
+                    const rot = time * speed
+                    cube.rotation.x = rot
+                    cube.rotation.y = rot
+                })
+
+                // cube.rotation.x = time
+                // cube.rotation.y = time
+                renderer.render(scene, camera)
+
+                requestAnimationFrame(render)
+            }
+            requestAnimationFrame(render)
+
+            // 设置canvas像素和屏幕像素一致
+            function resizeRendererToDisplaySize(renderer) {
+                const canvas = renderer.domElement
+                const width = canvas.clientWidth
+                const height = canvas.clientHeight
+                const needResize = canvas.width !== width || canvas.height !== height
+                if (needResize) {
+                    renderer.setSize(width, height, false)
+                }
+                return needResize
+            }
+        }
+        main();
+    </script>
+</body>
+
+</html>

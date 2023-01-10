@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        #c {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <script type="module">
+        import * as THREE from "./build/three.module.js"
+
+        function main() {
+            const canvas = document.querySelector("#c")
+            // 将dom对象传给THREEjs渲染
+            const renderer = new THREE.WebGLRenderer({ canvas })
+
+            const fov = 40; // 相机角度
+            const aspect = 2 // 相机的高宽比
+            const near = 0.1 // 相机的近平面和远平面
+            const far = 1000
+
+            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+            camera.position.set(0, 50, 0)
+            camera.up.set(0, 0, 1) // 相机以z轴正方向为上方,默认以y轴正方向为上方
+            camera.lookAt(0, 0, 0) // lookAt 函数让相机从他的位置看向lookAt函数传的位置
+
+            const scene = new THREE.Scene() // 定义场景
+
+            // 定义灯光
+            const color = 0xFFFFFF // 发光颜色
+            const intensity = 3 // 发光强度
+            const light = new THREE.PointLight(color, intensity) // 灯光对象
+            scene.add(light) // 创景中加载灯光
+
+            const objects = []
+
+            const radius = 1 // 半径
+            const widthSegments = 6
+            const heightSegments = 6
+            const sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments) // 设置几何体
+
+            // 创建一个新的场景图节点.
+            const solarSystem = new THREE.Object3D()
+            scene.add(solarSystem)
+            objects.push(solarSystem)
+
+            const sunMaterial = new THREE.MeshPhongMaterial({ emissive: 0xFFFF00 }) // 设置材质
+
+            const sunMesh = new THREE.Mesh(sphereGeometry, sunMaterial) // 创建网格对象
+
+            sunMesh.scale.set(5, 5, 5) // 设置网格对象的缩放
+
+            // scene.add(sunMesh) // 场景中加入网格对象
+            solarSystem.add(sunMesh) // 场景中加入网格对象
+
+            objects.push(sunMesh) // 将网格对象push到objects数组中
+
+            // 再创建一个新的节点
+            const earthOrbit = new THREE.Object3D();
+            earthOrbit.position.x = 10;
+            solarSystem.add(earthOrbit);
+            objects.push(earthOrbit);
+
+            // 地球
+            const earthMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2233ff,
+                emissive: 0x112244,
+            })
+            const earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial)
+            // earthMesh.position.x = 10;
+            // scene.add(earthMesh)
+            // sunMesh.add(earthMesh) // 让地球绕着太阳转
+            // solarSystem.add(earthMesh)
+            earthOrbit.add(earthMesh)
+            objects.push(earthMesh)
+
+            const moonOrbit = new THREE.Object3D();
+            moonOrbit.position.x = 2;
+            earthOrbit.add(moonOrbit);
+            // 月球
+            const moonMaterial = new THREE.MeshPhongMaterial({ color: 0x888888, emissive: 0x222222 });
+            const moonMesh = new THREE.Mesh(sphereGeometry, moonMaterial);
+            moonMesh.scale.set(.5, .5, .5);
+            moonOrbit.add(moonMesh);
+            objects.push(moonMesh);
+
+            // 设置渲染的分辨率和窗口分辨率一致
+            function resizeRendererToDisplaySize(renderer) {
+                const canvas = renderer.domElement
+                const width = canvas.clientWidth
+                const height = canvas.clientHeight
+                const needResize = canvas.width !== width || canvas.height !== height
+                if (needResize) {
+                    renderer.setSize(width, height, false)
+                }
+                return needResize
+            }
+
+            // 渲染函数
+            function render(time) {
+                time *= 0.001;
+                if (resizeRendererToDisplaySize(renderer)) {
+                    // 设置相机的宽高比与canvas相同，让网格对象不会被拉伸
+                    const canvas = renderer.domElement
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight
+                    camera.updateProjectionMatrix();
+                }
+
+                // 遍历网格对象数组,设置网格对象的旋转角度
+                objects.forEach((obj) => {
+                    obj.rotation.y = time
+                })
+
+                // 渲染场景
+                renderer.render(scene, camera)
+
+                requestAnimationFrame(render)
+
+            }
+            requestAnimationFrame(render)
+
+        }
+        main()
+
+    </script>
+
+</body>
+
+</html>
